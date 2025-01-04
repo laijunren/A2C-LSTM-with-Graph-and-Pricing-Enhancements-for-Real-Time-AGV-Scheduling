@@ -1,0 +1,3 @@
+start train
+iteration 1: best cost 63068.545342062505current cost 78210.89872338138
+iteration 2: best cost 63068.545342062505current cost 78210.89872338138

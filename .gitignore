@@ -1,0 +1,8 @@
+**/.DS_Store
+**/.ipynb_checkpoints/
+**/*.pth
+**/*.zip
+**/out/
+**/__pycache__/
+**/.idea/
+

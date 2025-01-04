@@ -1,0 +1,1 @@
+For input string: "N0401S00230"
