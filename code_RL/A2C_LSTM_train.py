@@ -24,12 +24,12 @@ torch.backends.cudnn.deterministic = True
 output_path = "./A2C_output/"
 STATE_DIM = 26  # 18 + 4 + 4
 ACTION_DIM = 9
-NUM_EPISODE = 5000
+NUM_EPISODE = 5
 A_HIDDEN = 256
 C_HIDDEN = 256
 a_lr = 1e-4
 c_lr = 1e-4
-weight_decay = 1e-4  # Add weight decay for regularization
+# weight_decay = 1e-4  # Add weight decay for regularization
 
 
 class ActorNetwork(nn.Module):
@@ -133,10 +133,10 @@ def main():
     map = [[1997, 950, 0], [1112, 946, 0], [1515, 947, 0]]  # Real-world location coordinates
 
     value_network = ValueNetwork(in_size=STATE_DIM, hidden_size=C_HIDDEN, out_size=1)
-    value_network_optim = torch.optim.Adam(value_network.parameters(), lr=c_lr, weight_decay=weight_decay)
+    value_network_optim = torch.optim.Adam(value_network.parameters(), lr=c_lr) # weight_decay=weight_decay
 
     actor_network = ActorNetwork(in_size=STATE_DIM, hidden_size=A_HIDDEN, out_size=ACTION_DIM)
-    actor_network_optim = torch.optim.Adam(actor_network.parameters(), lr=a_lr, weight_decay=weight_decay)
+    actor_network_optim = torch.optim.Adam(actor_network.parameters(), lr=a_lr) # weight_decay=weight_decay
 
     actor_loss_records = []
     critic_loss_records = []

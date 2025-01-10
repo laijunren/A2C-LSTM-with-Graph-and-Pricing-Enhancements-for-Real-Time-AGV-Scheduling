@@ -184,7 +184,7 @@ if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
 
     env = BonsaltEnv('http://localhost:5000', 'rl-hospital', 'not used')
-    # env = BonsaltEnv('http://z.dev.vertices.tech:5015', 'rl-hospital', 'not used')
+   
 
     index = 0
     while True:
