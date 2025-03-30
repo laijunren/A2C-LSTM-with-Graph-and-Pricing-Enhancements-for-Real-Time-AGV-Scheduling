@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # 加载任务表格
-file_path = '/home/aaa/my_code/hospital-main/Simulator/Hospital_DRL/test_instances/d5_164.xlsx'  # 替换为实际路径
+file_path = '/home/aaa/my_code/hospital-main/Simulator/Hospital_DRL/test_instances/d4_181.xlsx'  # 替换为实际路径
 tasks = pd.read_excel(file_path)  # 使用 read_excel 函数读取 .xlsx 文件
 
 # 提取所有唯一节点
@@ -33,8 +33,8 @@ print("度矩阵：")
 print(degree_matrix_df)
 
 # 设置保存路径
-adj_matrix_output_path = '/home/aaa/my_code/hospital-main/Simulator/Hospital_DRL/output/adjacency_matrix.csv'  # 替换为实际路径
-degree_matrix_output_path = '/home/aaa/my_code/hospital-main/Simulator/Hospital_DRL/output/degree_matrix.csv'  # 替换为实际路径
+adj_matrix_output_path = '/home/aaa/my_code/hospital-main/Simulator/Hospital_DRL/output/181adjacency_matrix.csv'  # 替换为实际路径
+degree_matrix_output_path = '/home/aaa/my_code/hospital-main/Simulator/Hospital_DRL/output/181degree_matrix.csv'  # 替换为实际路径
 
 # 保存邻接矩阵
 adj_matrix_df.to_csv(adj_matrix_output_path, index=True)

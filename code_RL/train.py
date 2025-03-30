@@ -4,7 +4,6 @@ import random
 import sys
 import time
 from datetime import datetime
-
 import torch.optim as optim
 
 from A2C import *
@@ -19,10 +18,10 @@ torch.backends.cudnn.deterministic = True
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 output_path = "./A2C_output/"
-input_dim = 18
+input_dim = 22
 action_dim = 9
-lr = 1e-3
-total_episodes = 4000
+lr = 1e-4
+total_episodes = 3000
 num_envs = 1
 num_agv = 164
 
@@ -37,7 +36,7 @@ env = make_env()
 LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 logging.basicConfig(level=logging.ERROR, format=LOG_FORMAT)
 logger = logging.getLogger('main')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)  # 设置日志记录的级别为INFO，而非DEBUG
 
 actor_loss_records = []
 critic_loss_records = []

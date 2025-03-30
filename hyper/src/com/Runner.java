@@ -1,5 +1,5 @@
 package com;
-
+import com.Config;
 import com.MSHH.MSHH;
 import com.MSHH.SMSHH;
 import com.VNS.SVNS;

@@ -6,3 +6,5 @@ iteration 3: best cost 447.0current cost 447.0
 iteration 4: best cost 447.0current cost 447.0
 iteration 5: best cost 447.0current cost 447.0
 iteration 6: best cost 447.0current cost 447.0
+iteration 7: best cost 447.0current cost 447.0
+iteration 8: best cost 447.0current cost 447.0

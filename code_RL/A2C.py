@@ -11,7 +11,7 @@ class ActorCritic(nn.Module):
         super(ActorCritic, self).__init__()
         # nn.initializer.set_global_initializer(nn.initializer.XavierNormal(), nn.initializer.Constant(value=0.))
         hidden_dim1 = 256
-        hidden_dim2 = 64
+        hidden_dim2 = 256
 
         self.actor = nn.Sequential(
             # nn.Flatten(0),
@@ -87,21 +87,32 @@ def select_action_greedy(state):
 
 
 def calculate_reward(final_obs, optimal_theoretical):
+    """
+    final_obs: ( (batch_of_states), total_mpn )
+              其中 final_obs[0] 是若干工件的 (wait, setUp, execTime, lift)
+              final_obs[1] 是总的 mpn
+    optimal_theoretical: 理论最优值
+    """
     rewards = []
     total_mpn = final_obs[1]
     if total_mpn <= 0.0:
         total_mpn = 100000
         print("error: simulator run out of time")
     assert total_mpn > 0
-    makespan = math.log((total_mpn - optimal_theoretical) / 100, 1.5) - 1.5
+
+    # 确保 log_value 始终为正
+    log_value = max((total_mpn - optimal_theoretical + 1e-6) / 100, 1e-6)
+
+    makespan = math.log(log_value, 1.3) - 2
+
     for i in range(len(final_obs[0])):
         wait, setUp, execTime, lift = final_obs[0][i]
-        a = math.log(wait * 0.04 + math.e) - 1
-        b = setUp * 0.02
-        c = execTime * 0.003
-        d = lift * 0.01
-        # print(a, b, c, d, makespan)
-        rewards.append(-(a + b + c + d + makespan - 13))
+        a = math.log(wait * 0.01 + math.e) - 1
+        b = math.log(setUp * 0.02 + 2, 2) - 1
+        c = execTime * 0.002
+        d = lift * 0.005
+        rewards.append(-(a + b + c + d + makespan - 11) / 6)
+
     return rewards
 
 
