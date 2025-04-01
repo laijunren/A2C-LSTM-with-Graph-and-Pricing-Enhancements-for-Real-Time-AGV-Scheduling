@@ -9,7 +9,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv
+# 使用 GATConv 替换 GCNConv
+from torch_geometric.nn import GATConv
 
 from Environment import make_env  # 你自己的环境
 
@@ -26,14 +27,14 @@ torch.backends.cudnn.deterministic = True
 output_path = "./A2C_output/"
 STATE_DIM = 22      # 环境 state 的维度
 ACTION_DIM = 9      # 动作空间大小
-NUM_EPISODE = 3000  # 训练回合数
-A_HIDDEN = 256      # Actor LSTM隐藏层大小
-C_HIDDEN = 256      # Critic LSTM隐藏层大小
-a_lr = 1e-3
-c_lr = 1e-3
+NUM_EPISODE = 2000  # 训练回合数
+A_HIDDEN = 128      # Actor LSTM隐藏层大小
+C_HIDDEN = 128      # Critic LSTM隐藏层大小
+a_lr = 1e-4
+c_lr = 1e-4
 
 # ------------------------------
-#     从 data_config 导入图数据配置
+#      从 data_config 导入图数据配置
 # ------------------------------
 from data_config import feature_matrix, edge_index, edge_weight, unique_nodes, node_index
 
@@ -42,22 +43,61 @@ num_node_features = feature_matrix.size(1)
 gcn_hidden_channels = 32
 
 # ------------------------------
-#      定义 Actor/Critic 网络
+#       定义部分加载状态字典的函数
+# ------------------------------
+def load_partial_state(model, state_dict):
+    model_dict = model.state_dict()
+    # 筛选出键名存在且形状匹配的参数
+    compatible_dict = {k: v for k, v in state_dict.items() if k in model_dict and model_dict[k].shape == v.shape}
+    model_dict.update(compatible_dict)
+    model.load_state_dict(model_dict)
+    return len(compatible_dict), len(model_dict)
+
+# 自动遍历目录，选择匹配率最高的checkpoint加载
+def load_best_checkpoint(model, checkpoint_dir, keyword):
+    best_ratio = 0
+    best_file = None
+    model_dict = model.state_dict()
+    total_params = len(model_dict)
+    for file in os.listdir(checkpoint_dir):
+        if file.endswith('.pth') and keyword in file:
+            ckpt_path = os.path.join(checkpoint_dir, file)
+            try:
+                state = torch.load(ckpt_path)
+            except Exception as e:
+                print(f"无法加载 {ckpt_path}: {e}")
+                continue
+            match_count = sum(1 for k, v in state.items() if k in model_dict and model_dict[k].shape == v.shape)
+            ratio = match_count / total_params
+            print(f"文件 {file} 匹配比例：{ratio:.2f}")
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_file = ckpt_path
+    if best_file:
+        state = torch.load(best_file)
+        match_count, total = load_partial_state(model, state)
+        print(f"从 {best_file} 加载了 {match_count}/{total} 个匹配的参数")
+    else:
+        print(f"未找到匹配 {keyword} 的预训练模型，模型将从头开始训练")
+
+# ------------------------------
+#       定义 Actor/Critic 网络
 # ------------------------------
 class ActorNetwork(nn.Module):
     def __init__(self, state_dim, gcn_in_channels, gcn_hidden_channels, lstm_hidden_size, action_dim):
         super(ActorNetwork, self).__init__()
-        self.gcn1 = GCNConv(gcn_in_channels, gcn_hidden_channels)
-        self.gcn2 = GCNConv(gcn_hidden_channels, gcn_hidden_channels)
+        # 使用 GATConv 替换 GCNConv，设置 heads=1, concat=False, edge_dim=1
+        self.gcn1 = GATConv(gcn_in_channels, gcn_hidden_channels, heads=1, concat=False, edge_dim=1)
+        self.gcn2 = GATConv(gcn_hidden_channels, gcn_hidden_channels, heads=1, concat=False, edge_dim=1)
         self.lstm_input_dim = gcn_hidden_channels + state_dim
         self.lstm = nn.LSTM(self.lstm_input_dim, lstm_hidden_size, batch_first=True)
         self.fc = nn.Linear(lstm_hidden_size, action_dim)
 
     def forward(self, x_graph, edge_index, edge_weight, x_state, hidden):
-        # 1) GCN
-        x_graph = self.gcn1(x_graph, edge_index, edge_weight=edge_weight)
+        # 1) 使用 GATConv 计算节点表示（传入 edge_attr=edge_weight）
+        x_graph = self.gcn1(x_graph, edge_index, edge_attr=edge_weight)
         x_graph = F.relu(x_graph)
-        x_graph = self.gcn2(x_graph, edge_index, edge_weight=edge_weight)
+        x_graph = self.gcn2(x_graph, edge_index, edge_attr=edge_weight)
         x_graph = F.relu(x_graph)
         # 2) Global mean pooling
         x_graph = x_graph.mean(dim=0, keepdim=True)  # [1, gcn_hidden_channels]
@@ -74,16 +114,17 @@ class ActorNetwork(nn.Module):
 class ValueNetwork(nn.Module):
     def __init__(self, state_dim, gcn_in_channels, gcn_hidden_channels, lstm_hidden_size):
         super(ValueNetwork, self).__init__()
-        self.gcn1 = GCNConv(gcn_in_channels, gcn_hidden_channels)
-        self.gcn2 = GCNConv(gcn_hidden_channels, gcn_hidden_channels)
+        # 使用 GATConv 替换 GCNConv，设置相同参数
+        self.gcn1 = GATConv(gcn_in_channels, gcn_hidden_channels, heads=1, concat=False, edge_dim=1)
+        self.gcn2 = GATConv(gcn_hidden_channels, gcn_hidden_channels, heads=1, concat=False, edge_dim=1)
         self.lstm_input_dim = gcn_hidden_channels + state_dim
         self.lstm = nn.LSTM(self.lstm_input_dim, lstm_hidden_size, batch_first=True)
         self.fc = nn.Linear(lstm_hidden_size, 1)
 
     def forward(self, x_graph, edge_index, edge_weight, x_state, hidden):
-        x_graph = self.gcn1(x_graph, edge_index, edge_weight=edge_weight)
+        x_graph = self.gcn1(x_graph, edge_index, edge_attr=edge_weight)
         x_graph = F.relu(x_graph)
-        x_graph = self.gcn2(x_graph, edge_index, edge_weight=edge_weight)
+        x_graph = self.gcn2(x_graph, edge_index, edge_attr=edge_weight)
         x_graph = F.relu(x_graph)
         x_graph = x_graph.mean(dim=0, keepdim=True)
         x_combined = torch.cat([x_graph, x_state], dim=-1)
@@ -93,7 +134,7 @@ class ValueNetwork(nn.Module):
         return x_out, hidden
 
 # ------------------------------
-#       定义 Reward 计算及辅助函数
+#      定义 Reward 计算及辅助函数
 # ------------------------------
 def calculate_reward(final_obs, optimal_theoretical):
     rewards = []
@@ -142,7 +183,7 @@ def roll_out(actor, env, random=False):
         states.append(state)
         env_state_tensor = torch.FloatTensor(state).unsqueeze(0)
 
-        # 前向：ActorNetwork (包含 GCN + LSTM)
+        # 前向：ActorNetwork (包含 GAT + LSTM)
         log_softmax_action, (a_hx, a_cx) = actor(
             feature_matrix, edge_index, edge_weight,
             env_state_tensor, (a_hx, a_cx)
@@ -166,10 +207,10 @@ def roll_out(actor, env, random=False):
     return states, actions, rewards, final_r, state, makespan
 
 # ------------------------------
-#     保存训练结果的辅助函数
+#      保存训练结果的辅助函数
 # ------------------------------
 def save_training_results(actor_network, value_network, actor_network_optim, value_network_optim,
-                          actor_loss_records, critic_loss_records, episode_rewards, episode_makespan):
+                            actor_loss_records, critic_loss_records, episode_rewards, episode_makespan):
     os.makedirs(output_path, exist_ok=True)
     date_time = datetime.now().strftime("%m_%d_%H_%M")
 
@@ -227,9 +268,10 @@ def main():
     )
     actor_network_optim = torch.optim.AdamW(actor_network.parameters(), lr=a_lr)
 
-    # 如需加载已保存模型，可在此处调用加载函数（若有）
-    # load_model(actor_network, actor_network_path)
-    # load_model(value_network, value_network_path)
+    # 自动加载匹配率最高的预训练模型（部分加载）
+    checkpoint_dir = "/home/aaa/my_code/hospital-main/A2C_output/pth"  # 替换为你的checkpoint存放目录
+    load_best_checkpoint(actor_network, checkpoint_dir, keyword="Actor")
+    load_best_checkpoint(value_network, checkpoint_dir, keyword="Critic")
 
     actor_loss_records = []
     critic_loss_records = []
