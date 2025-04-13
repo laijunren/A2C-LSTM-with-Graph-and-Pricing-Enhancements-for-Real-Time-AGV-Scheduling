@@ -26,10 +26,10 @@ output_path = "./A2C_output/"
 STATE_DIM = 26  # 18 + 4 + 4
 ACTION_DIM = 9
 NUM_EPISODE = 3000
-A_HIDDEN = 128
-C_HIDDEN = 128
-a_lr = 1e-4
-c_lr = 1e-4
+A_HIDDEN = 256
+C_HIDDEN = 256
+a_lr = 2e-4
+c_lr = 2e-4
 
 # ------------------------------
 # 自动加载预训练模型函数
@@ -235,7 +235,7 @@ def main():
     actor_network_optim = torch.optim.Adam(actor_network.parameters(), lr=a_lr)
 
     # 自动加载之前保存的模型，预训练模型均存储在指定的目录下
-    checkpoint_dir = "/home/aaa/my_code/hospital-main/A2C_output/243"
+    checkpoint_dir = "/home/aaa/my_code/hospital-main/A2C_output/pth"
     load_best_checkpoint(actor_network, checkpoint_dir, "Actor")
     load_best_checkpoint(value_network, checkpoint_dir, "Critic")
 

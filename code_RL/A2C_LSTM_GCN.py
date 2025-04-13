@@ -27,11 +27,11 @@ torch.backends.cudnn.deterministic = True
 output_path = "./A2C_output/"
 STATE_DIM = 22      # 环境 state 的维度
 ACTION_DIM = 9      # 动作空间大小
-NUM_EPISODE = 2000  # 训练回合数
-A_HIDDEN = 128      # Actor LSTM隐藏层大小
-C_HIDDEN = 128      # Critic LSTM隐藏层大小
-a_lr = 1e-4
-c_lr = 1e-4
+NUM_EPISODE = 3000  # 训练回合数
+A_HIDDEN = 256      # Actor LSTM隐藏层大小
+C_HIDDEN = 256      # Critic LSTM隐藏层大小
+a_lr = 3e-4
+c_lr = 3e-4
 
 # ------------------------------
 #      从 data_config 导入图数据配置
