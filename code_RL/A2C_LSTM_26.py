@@ -28,8 +28,8 @@ ACTION_DIM = 9
 NUM_EPISODE = 3000
 A_HIDDEN = 256
 C_HIDDEN = 256
-a_lr = 2e-4
-c_lr = 2e-4
+a_lr = 1e-4
+c_lr = 1e-4
 
 # ------------------------------
 # 自动加载预训练模型函数

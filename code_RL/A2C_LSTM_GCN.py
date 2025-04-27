@@ -30,8 +30,8 @@ ACTION_DIM = 9      # 动作空间大小
 NUM_EPISODE = 3000  # 训练回合数
 A_HIDDEN = 256      # Actor LSTM隐藏层大小
 C_HIDDEN = 256      # Critic LSTM隐藏层大小
-a_lr = 3e-4
-c_lr = 3e-4
+a_lr = 1e-4
+c_lr = 1e-4
 
 # ------------------------------
 #      从 data_config 导入图数据配置
