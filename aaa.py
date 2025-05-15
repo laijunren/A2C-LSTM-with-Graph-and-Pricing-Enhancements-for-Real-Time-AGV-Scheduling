@@ -12,6 +12,6 @@ print(f"CUDA版本号:{torch.version.cuda}")
 print(f"cudnn版本：{torch.backends.cudnn.version()}")
 
 
-# 清除pytorch无用缓存
+
 gc.collect()
 torch.cuda.empty_cache()
