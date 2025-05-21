@@ -18,15 +18,15 @@ Hospitals face dynamic task arrivals, elevator congestion, and floor-specific ro
 
 ```
 .
-├── A2C_LSTM_GCN.py              # GCN-based A2C-LSTM model
-├── A2C_LSTM_train.py            # Dual-pricing A2C-LSTM training script
-├── Environment.py               # DRL-AnyLogic communication interface
-├── bonsalt.py                   # HTTP simulator communication (BonsaltEnv)
-├── Pricing.py                   # LP-based dual-value pricing module
-├── data_config.py               # Node/graph construction from hospital instance
-├── Utils.py                     # Auxiliary functions
-├── gym.py                       # Simple gym environment (baseline)
-└── Simulator/                   # External folder (AnyLogic simulation environment)
+├── A2C_LSTM_GCN.py                           # GCN-based A2C-LSTM model
+├── A2C_LSTM_Dual-value-pricing.py            # Dual-pricing A2C-LSTM training script
+├── Environment.py                            # DRL-AnyLogic communication interface
+├── bonsalt.py                                # HTTP simulator communication (BonsaltEnv)
+├── Pricing.py                                # LP-based dual-value pricing module
+├── data_config.py                            # Node/graph construction from hospital instance
+├── Utils.py                                  # Auxiliary functions
+├── gym.py                                    # Simple gym environment (baseline)
+└── Simulator/                                # External folder (AnyLogic simulation environment)
 ```
 
 ---
@@ -39,7 +39,7 @@ Hospitals face dynamic task arrivals, elevator congestion, and floor-specific ro
 - Combines spatial and temporal features via LSTM.
 - Learns AGV selection policy; task sequencing handled by heuristic.
 
-### 2. A2C–LSTM–Pricing
+### 2. A2C_LSTM_Dual-value-pricing.py
 
 - Uses dual-values from LP-set-covering relaxation as pricing signals.
 - Pricing integrated into both state vector and reward shaping.
@@ -113,22 +113,52 @@ Located in `Pricing.py`, this module:
 
 ## 📊 Output
 
-- `makespan_*.txt`: per-episode task completion time
-- `rewards_*.txt`: per-episode cumulative reward
-- `actor_loss_*.txt`: actor network loss over training
-- `critic_loss_*.txt`: critic network loss over training
+After training, the following files are automatically saved under `./A2C_output/`:
+
+- `Actor_<timestamp>.pth`: Trained actor network parameters
+- `Critic_<timestamp>.pth`: Trained critic network parameters
+- `Actor_optim_<timestamp>.pth`: Optimizer state for actor
+- `Critic_optim_<timestamp>.pth`: Optimizer state for critic
+- `makespan_<timestamp>.txt`: Per-episode task completion times
+- `rewards_<timestamp>.txt`: Cumulative rewards per episode
+- `actor_loss_<timestamp>.txt`: Actor loss values per episode
+- `critic_loss_<timestamp>.txt`: Critic loss values per episode
 
 ---
 
-## 📚 Citation
 
-For academic usage, please cite our NeurIPS 2025 paper:
-
-> Hybrid A2C–LSTM with Dual-Pricing Enhancement for Real-Time Hospital AGV Routing, NeurIPS 2025 (under review)
-
----
 
 ## 📧 Contact
 
 For questions, please contact:
-- 🧑‍🔬 MUYU LAI @ University of Nottingham Ningbo
+- 🧑‍🔬 scxjl8@nottingham.edu.cn
+
+---
+
+## 🔄 Loading Pretrained Models
+
+To continue training from saved checkpoints, this project includes a utility to **automatically load pretrained models**:
+
+```python
+from your_script import load_best_checkpoint
+
+actor_network = ActorNetwork(...)
+value_network = ValueNetwork(...)
+checkpoint_dir = "./A2C_output/pth"
+
+load_best_checkpoint(actor_network, checkpoint_dir, "Actor")
+load_best_checkpoint(value_network, checkpoint_dir, "Critic")
+```
+
+This function:
+- Scans the given directory for `.pth` files that contain the keywords `"Actor"` or `"Critic"`.
+- Measures parameter compatibility and loads only the matching layers.
+- Supports flexible resumption from partially matching models.
+
+If you prefer to **manually load a specific file**, you can also use:
+
+```python
+actor_network.load_state_dict(torch.load("A2C_output/Actor_xx_xx_xx_xx.pth"))
+```
+
+Make sure your model structure matches the saved weights.
