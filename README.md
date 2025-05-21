@@ -1,16 +1,23 @@
+# Hybrid A2C–LSTM with Dual-Pricing Enhancement for Real-Time Hospital AGV Routing
 
-# Hybrid A2C–LSTM for Real-Time Hospital AGV Scheduling
+This repository implements a hybrid deep reinforcement learning (DRL) framework for real-time dispatching of automated guided vehicles (AGVs) in multi-floor hospitals. The system integrates:
 
-This repository implements a hybrid deep reinforcement learning framework for real-time AGV (Automated Guided Vehicle) dispatching in multi-floor hospital environments. The method integrates an LSTM-enhanced Actor-Critic policy with two key enhancements:
+- **A2C–LSTM** architecture for sequential policy learning
+- **Graph Convolutional Networks (GCN)** to capture spatial structure
+- **Dual-Value Pricing signals** extracted from LP relaxations to enhance congestion sensitivity
 
-- **Graph Convolutional Networks (GCN)** for modeling spatial connectivity (e.g., elevators, charging points).
-- **Dual-Value Pricing Signals** derived from linear programming (LP) relaxations to improve congestion awareness.
+Simulations run in a high-fidelity **AnyLogic-based digital twin**, capturing elevator delays, stochastic arrivals, and energy constraints.
 
-The system is trained and evaluated within a **realistic AnyLogic-based hospital simulator**, supporting stochastic arrivals, elevator delays, and energy constraints.
+---
 
 ## 🚑 Use Case
 
-Hospitals face dynamic task arrivals, elevator congestion, and floor-specific routing constraints. This hybrid DRL system optimizes AGV makespan by learning efficient assignment policies under realistic constraints.
+Efficiently dispatching AGVs in hospitals is challenging due to:
+- Dynamic task arrival
+- Multi-floor navigation with elevator bottlenecks
+- Charging constraints and floor-specific access
+
+This framework provides adaptive policies that minimize makespan under such constraints.
 
 ---
 
@@ -18,147 +25,108 @@ Hospitals face dynamic task arrivals, elevator congestion, and floor-specific ro
 
 ```
 .
-├── A2C_LSTM_GCN.py                           # GCN-based A2C-LSTM model
-├── A2C_LSTM_Dual-value-pricing.py            # Dual-pricing A2C-LSTM training script
-├── Environment.py                            # DRL-AnyLogic communication interface
-├── bonsalt.py                                # HTTP simulator communication (BonsaltEnv)
-├── Pricing.py                                # LP-based dual-value pricing module
-├── data_config.py                            # Node/graph construction from hospital instance
-├── Utils.py                                  # Auxiliary functions
-├── gym.py                                    # Simple gym environment (baseline)
-└── Simulator/                                # External folder (AnyLogic simulation environment)
+├── A2C_LSTM.py                          # Baseline actor-critic model
+├── A2C_LSTM_Dual-value-pricing.py      # Pricing-based enhancement model
+├── A2C_LSTM_GCN.py                      # GCN-based enhancement model
+├── Environment.py                       # Python-AnyLogic environment wrapper
+├── Pricing.py                           # LP relaxation and dual variable extraction
+├── bonsalt.py                           # REST API simulator interface (Bonsalt)
+├── data_config.py                       # Graph and feature preprocessing
+├── Utils.py                             # Reward functions and helpers
+├── gym.py                               # Gym baseline variant (for testing)
+├── requirements.txt                     # Python dependencies
+└── Simulator/                           # AnyLogic model scripts
 ```
 
 ---
 
-## 🧠 Models
+## 🔧 Setup Instructions
 
-### 1. A2C–LSTM–GCN
-
-- Encodes hospital layout into node embeddings via GCN.
-- Combines spatial and temporal features via LSTM.
-- Learns AGV selection policy; task sequencing handled by heuristic.
-
-### 2. A2C_LSTM_Dual-value-pricing.py
-
-- Uses dual-values from LP-set-covering relaxation as pricing signals.
-- Pricing integrated into both state vector and reward shaping.
-- Enhances resource sensitivity under elevator congestion.
-
----
-
-## 🧪 Training Instructions
-
-### 1. Prerequisites
-
-- Python 3.8+
-- PyTorch ≥ 1.10
-- PyTorch Geometric
-- Gurobi Optimizer (academic license required)
-- AnyLogic simulator (external)
-
-### 2. Start the Simulator
-
-Before launching the training, ensure the simulation services are running:
+### Environment
 
 ```bash
-# Start the Bonsalt daemon (custom executable)
-./bonsalt_release_1_1_linux/Bonsalt.Daemon
+conda create -n agv-rl python=3.8
+conda activate agv-rl
+pip install -r requirements.txt
+```
 
-# Then launch the AnyLogic simulation
+> 💡 Use the appropriate PyTorch Geometric wheel from https://pytorch-geometric.com/ based on your CUDA version.
+
+### Start Simulation Services
+
+```bash
+./bonsalt_release_1_1_linux/Bonsalt.Daemon
 ./Simulator/Hospital_DRL/start-simulator.sh
 ```
 
-### 3. Train a Model
+---
 
-**A2C–LSTM baseline:**
+## 🧠 Model Training
+
 ```bash
+# Baseline
 python A2C_LSTM.py
-```
 
-**Dual-value pricing variant:**
-```bash
+# Dual-pricing enhanced
 python A2C_LSTM_Dual-value-pricing.py
-```
 
-**GCN-enhanced variant:**
-```bash
+# GCN-enhanced
 python A2C_LSTM_GCN.py
 ```
 
-Training logs, models, and reward curves are saved under `./A2C_output/`.
+Training logs and weights are stored in `A2C_output/`.
 
 ---
 
-## 🔌 Integration with AnyLogic
-
-The communication between Python and AnyLogic is handled via `bonsalt.py`, which wraps HTTP requests to a RESTful Bonsalt simulator API.
-
-- **Reset episode:** triggers AnyLogic to generate a new simulation instance.
-- **Step(action):** sends selected AGV ID and receives the next environment state and reward.
-
-> Ensure the AnyLogic experiment is configured to run in server mode and listen on port `5000`.
-
----
-
-## 🧮 Dual-Value Pricing Module
+## 🧮 Dual-Value Pricing
 
 Located in `Pricing.py`, this module:
 
-- Solves a relaxed Set-Covering Problem (SCP) using Gurobi.
-- Extracts dual variables (marginal costs of node inclusion).
-- Injects them into the state and reward space to guide congestion-sensitive learning.
+- Solves a relaxed Set-Covering Problem using Gurobi
+- Extracts marginal values (dual variables)
+- Injects them into the state and reward for resource-aware scheduling
 
 ---
 
-## 📊 Output
+## 🧬 GCN Representation
 
-After training, the following files are automatically saved under `./A2C_output/`:
+In `A2C_LSTM_GCN.py`:
 
-- `Actor_<timestamp>.pth`: Trained actor network parameters
-- `Critic_<timestamp>.pth`: Trained critic network parameters
-- `Actor_optim_<timestamp>.pth`: Optimizer state for actor
-- `Critic_optim_<timestamp>.pth`: Optimizer state for critic
-- `makespan_<timestamp>.txt`: Per-episode task completion times
-- `rewards_<timestamp>.txt`: Cumulative rewards per episode
-- `actor_loss_<timestamp>.txt`: Actor loss values per episode
-- `critic_loss_<timestamp>.txt`: Critic loss values per episode
+- Uses `GATConv` layers (PyG) over spatial node graphs
+- Learns task embeddings and fuses them with temporal state via LSTM
+- Enhances convergence and elevator bottleneck adaptation
 
 ---
 
+## 📈 Output Files
 
+Under `A2C_output/`:
 
-## 📧 Contact
-
-For questions, please contact:
-- 🧑‍🔬 scxjl8@nottingham.edu.cn
+- `Actor_*.pth`, `Critic_*.pth`: Model weights
+- `*_optim_*.pth`: Optimizer states
+- `makespan_*.txt`, `rewards_*.txt`: Episode metrics
+- `actor_loss_*.txt`, `critic_loss_*.txt`: Training losses
 
 ---
 
-## 🔄 Loading Pretrained Models
-
-To continue training from saved checkpoints, this project includes a utility to **automatically load pretrained models**:
+## 🔄 Load Pretrained Models
 
 ```python
-from your_script import load_best_checkpoint
-
-actor_network = ActorNetwork(...)
-value_network = ValueNetwork(...)
-checkpoint_dir = "./A2C_output/pth"
-
-load_best_checkpoint(actor_network, checkpoint_dir, "Actor")
-load_best_checkpoint(value_network, checkpoint_dir, "Critic")
+from Utils import load_best_checkpoint
+load_best_checkpoint(model, "A2C_output/pth", "Actor")
 ```
 
-This function:
-- Scans the given directory for `.pth` files that contain the keywords `"Actor"` or `"Critic"`.
-- Measures parameter compatibility and loads only the matching layers.
-- Supports flexible resumption from partially matching models.
-
-If you prefer to **manually load a specific file**, you can also use:
-
+You may also manually load:
 ```python
-actor_network.load_state_dict(torch.load("A2C_output/Actor_xx_xx_xx_xx.pth"))
+model.load_state_dict(torch.load("A2C_output/Actor_XX.pth"))
 ```
 
-Make sure your model structure matches the saved weights.
+---
+
+## 📊 Dataset
+
+- 30 synthetic task instances
+- Three scales: Small (20–95), Medium (116–200), Large (256–328)
+- Includes floor-aware task graphs and LP dual-value labels
+
+---
