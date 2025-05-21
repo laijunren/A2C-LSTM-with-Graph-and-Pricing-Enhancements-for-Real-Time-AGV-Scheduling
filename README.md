@@ -1,3 +1,4 @@
+
 # Hybrid A2C–LSTM for Real-Time Hospital AGV Scheduling
 
 This repository implements a hybrid deep reinforcement learning framework for real-time AGV (Automated Guided Vehicle) dispatching in multi-floor hospital environments. The method integrates an LSTM-enhanced Actor-Critic policy with two key enhancements:
@@ -70,14 +71,19 @@ Before launching the training, ensure the simulation services are running:
 
 ### 3. Train a Model
 
-**GCN variant:**
+**A2C–LSTM baseline:**
 ```bash
-python A2C_LSTM_GCN.py
+python A2C_LSTM.py
 ```
 
-**Pricing variant:**
+**Dual-value pricing variant:**
 ```bash
-python A2C_LSTM_train.py
+python A2C_LSTM_Dual-value-pricing.py
+```
+
+**GCN-enhanced variant:**
+```bash
+python A2C_LSTM_GCN.py
 ```
 
 Training logs, models, and reward curves are saved under `./A2C_output/`.
@@ -125,4 +131,4 @@ For academic usage, please cite our NeurIPS 2025 paper:
 ## 📧 Contact
 
 For questions, please contact:
-- scxjl8@nottingham.edu.cn
+- 🧑‍🔬 MUYU LAI @ University of Nottingham Ningbo
