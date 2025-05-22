@@ -70,7 +70,7 @@ Before starting training, ensure the simulator services are running:
 
 ---
 
-📥 AnyLogic Simulator Installation
+## 📥 AnyLogic Simulator Installation
 To run the hospital simulation, you need to install AnyLogic. Here’s how:
 
 1. Download AnyLogic
