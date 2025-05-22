@@ -49,7 +49,7 @@ This framework provides adaptive policies that minimize makespan under these con
 To set up your environment, run the following commands:
 
 ```bash
-conda create -n agv-rl python=3.8
+conda create -n agv-rl python=3.10
 conda activate agv-rl
 pip install -r requirements.txt
 ````
