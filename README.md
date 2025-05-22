@@ -70,6 +70,35 @@ Before starting training, ensure the simulator services are running:
 
 ---
 
+📥 AnyLogic Simulator Installation
+To run the hospital simulation, you need to install AnyLogic. Here’s how:
+
+1. Download AnyLogic
+Go to the official AnyLogic website.
+
+Choose the "Academic" or "Trial" version depending on your license type.
+
+Download and install the software for your operating system (Windows, Mac, Linux).
+
+2. Install AnyLogic
+Follow the installation instructions specific to your OS:
+
+Windows: Run the .exe file and follow the installation wizard.
+
+Mac: Mount the .dmg file and drag the AnyLogic app to the Applications folder.
+
+Linux: Follow the Linux installation guide for your distribution.
+
+3. Configure AnyLogic for Server Mode
+Once installed, configure AnyLogic to run in server mode to allow interaction with the simulator:
+
+Open AnyLogic and create or open the hospital simulation model.
+
+Ensure the model is running in server mode (configured in the simulation settings).
+
+The simulator should listen on port 5000 for incoming connections from Python (via Bonsalt).
+
+
 ## 🧳 Instance Conversion Steps
 
 To use different task instances for training, follow these steps to replace the `model.jar` file:
